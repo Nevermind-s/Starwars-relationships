@@ -3,7 +3,9 @@ import os
 import json
 import requests
 import re
+from pandas import DataFrame, set_option
 from py2neo import Graph, Node, Relationship, authenticate
+
 
 
 def connect():
@@ -13,9 +15,7 @@ def connect():
     password = "b.lkkuPzLUVr2a.xQUlltaH016XjZeg"
     authenticate("hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24780", "salim", "b.lkkuPzLUVr2a.xQUlltaH016XjZeg")
     graph = Graph("bolt://hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24786", user="salim", password="b.lkkuPzLUVr2a.xQUlltaH016XjZeg", bolt=True, secure = True, http_port = 24789, https_port = 24780)
-    print(graph.data("MATCH (a:Planets) RETURN a.index"))
-    print(graph.data("MATCH (a:Species) RETURN a.homeworld"))
-    print(graph.data("MATCH (a:People) RETURN a.homeworld"))
+    set_option('display.max_rows', 200)
     return graph
     
 def populateDataBase(): 
@@ -83,13 +83,33 @@ def populateDataBase():
             except KeyError: 
                 continue  
 
-def getOneFrom() :
-    graph = connect() 
-    graph.data("MATCH p=()-[r:BlongsTo]->(s:Species)WHERE s.name ='Human' RETURN p")
+
+def getAllSpeciesAndPlanets(graph):
+    allSpeciesAndPlanets = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) RETURN people.name, specie.name, planet.name").data())
+    print(allSpeciesAndPlanets)
+
+def getOneSpecieInTheGalaxy(graph):
+    oneSpecieFromTheSamePlanet = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) WHERE specie.name = 'Human' RETURN people.name, planet.name ORDER BY planet.name").data())
+    print(oneSpecieFromTheSamePlanet)
+
+def getCountOfTheSpeciesForeachPlanet(graph):
+    countOfTheSpeciesForeachPlanet = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) RETURN planet.name, specie.name, count(specie.name) as c ORDER BY c DESC").data())
+    print(countOfTheSpeciesForeachPlanet)
 
               
 
 
 if __name__ == '__main__':
-
-    connect()
+    graph = connect() 
+    print("_______________________________________________")
+    print("ALL SPECIES AND PLANETS")
+    print("_______________________________________________")
+    getAllSpeciesAndPlanets(graph)
+    print("_______________________________________________")
+    print("One Specie In The Galaxy")
+    print("_______________________________________________")
+    getOneSpecieInTheGalaxy(graph)
+    print("_______________________________________________")
+    print("Count Of All The Species For Each Planet")
+    print("_______________________________________________")
+    getCountOfTheSpeciesForeachPlanet(graph)
