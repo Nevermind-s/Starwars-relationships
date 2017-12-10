@@ -83,6 +83,9 @@ def populateDataBase():
             except KeyError: 
                 continue  
 
+def createRelations(graph):
+    graph.run("MATCH (a:People), (b:Planets) WHERE toInteger(a.homeworld) = toInteger(b.index) CREATE (a)-[:IsForm]->(b) RETURN	a,b")
+    graph.run("MATCH (a:People), (b:Species) WHERE toInteger(a.specie) = toInteger(b.index) CREATE (a)-[:BelongsTo]->(b) return	a,b") 
 
 def getAllSpeciesAndPlanets(graph):
     allSpeciesAndPlanets = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) RETURN people.name, specie.name, planet.name").data())
@@ -107,7 +110,7 @@ if __name__ == '__main__':
     getAllSpeciesAndPlanets(graph)
     print("_______________________________________________")
     print("One Specie In The Galaxy")
-    print("_______________________________________________")
+    print("_______________________________________________")    
     getOneSpecieInTheGalaxy(graph)
     print("_______________________________________________")
     print("Count Of All The Species For Each Planet")
