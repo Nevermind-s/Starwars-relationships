@@ -11,11 +11,11 @@ from py2neo import Graph, Node, Relationship, authenticate
 def connect():
     
     url ="bolt://hobby-gmhcabifaghcgbkeaeeijial.dbs.graphenedb.com:24786"
-    user = "salim"
+    user = "salim"                          #This User is in READ-ONLY mode for security prevention.
     password = "b.lkkuPzLUVr2a.xQUlltaH016XjZeg"
     authenticate("hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24780", "salim", "b.lkkuPzLUVr2a.xQUlltaH016XjZeg")
     graph = Graph("bolt://hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24786", user="salim", password="b.lkkuPzLUVr2a.xQUlltaH016XjZeg", bolt=True, secure = True, http_port = 24789, https_port = 24780)
-    set_option('display.max_rows', 200)
+    set_option('display.max_rows', 200)  #Option for the DataFram in order to display all the data.
     return graph
     
 def populateDataBase(): 
