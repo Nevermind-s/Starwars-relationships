@@ -9,20 +9,29 @@ from py2neo import Graph, Node, Relationship, authenticate
 
 
 def connect():
-    
-    
-    url ="bolt://hobby-gmhcabifaghcgbkeaeeijial.dbs.graphenedb.com:24786"
-    user = "salim"                          #This User is in READ-ONLY mode for security prevention.
-    password = "b.lkkuPzLUVr2a.xQUlltaH016XjZeg"
+    '''
+        Connect to the remote Neo4J database.
+        The user is in read only mode to prevent security issues.
+        :return: a graphe model object that is used to perform CQL request.
+
+    '''
     authenticate("hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24780", "salim", "b.lkkuPzLUVr2a.xQUlltaH016XjZeg")
     graph = Graph("bolt://hobby-jdigfinckhclgbkemfgjjial.dbs.graphenedb.com:24786", user="salim", password="b.lkkuPzLUVr2a.xQUlltaH016XjZeg", bolt=True, secure = True, http_port = 24789, https_port = 24780)
-    set_option('display.max_rows', 200)  #Option for the DataFram in order to display all the data.
+    set_option('display.max_rows', 200)  #Option for the DataFram to display all the data.
     return graph
     
 def populateDataBase(): 
+    '''
+        Scrape the STAR WARS API, parse JSON objects and make them fit to the context.
+        Schema People : {name, specie, homeworld, index}
+        Schema Specie: {name, classification, homeworld, index}
+        Schema Planet: {name, climate, index}
+
+        Indexes are mainly used to establish automatic relations.
+    '''
      
     graph = connect()
-    urls = {'people': 'https://swapi.co/api/people/?page=',
+    urls = {'people': 'https://swapi.co/api/people/?page=', ## APIs URLS
             'species': 'https://swapi.co/api/species/?page=',
             'planets': 'https://swapi.co/api/planets/?page='}
 
@@ -85,19 +94,34 @@ def populateDataBase():
                 continue  
 
 def createRelations(graph):
+    '''
+        Establish automaticly relations in function of the same indexes.
+        This method is just used on initial time to populate our database and pretend that data have been here for a while.
+    '''
     graph.run("MATCH (a:People), (b:Planets) WHERE toInteger(a.homeworld) = toInteger(b.index) CREATE (a)-[:IsForm]->(b) RETURN	a,b")
     graph.run("MATCH (a:People), (b:Species) WHERE toInteger(a.specie) = toInteger(b.index) CREATE (a)-[:BelongsTo]->(b) return	a,b") 
 
 def getAllSpeciesAndPlanets(graph):
+    '''
+        CQL query: Match all the species, the relations, the planets and the relations between them.
+    '''
     allSpeciesAndPlanets = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) RETURN people.name, specie.name, planet.name").data())
     print(allSpeciesAndPlanets)
 
 def getOneSpecieInTheGalaxy(graph):
+    '''
+        CQL query: Match all the humans of all the planets.
+    '''
     oneSpecieFromTheSamePlanet = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) WHERE specie.name = 'Human' RETURN people.name, planet.name ORDER BY planet.name").data())
     print(oneSpecieFromTheSamePlanet)
 
 def getCountOfTheSpeciesForeachPlanet(graph):
-    countOfTheSpeciesForeachPlanet = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets) RETURN planet.name, specie.name, count(specie.name) as c ORDER BY c DESC").data())
+    '''
+        CQL query: Get the count of each Specie for each Planet. 
+    '''
+
+
+    countOfTheSpeciesForeachPlanet = DataFrame(graph.run("MATCH p=(specie:Species)<-[r]-(people:People)-[re]->(planet:Planets)  RETURN planet.name, specie.name, count(specie.name) ORDER BY specie.name").data())
     print(countOfTheSpeciesForeachPlanet)
 
               
